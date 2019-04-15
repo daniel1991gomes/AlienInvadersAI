@@ -18,7 +18,7 @@ Enemy(float posX, float posY){
 void show(){
   noFill();
   stroke(255);
-  rect(pos.x, pos.y, 50, 30);
+  rect(pos.x, pos.y, w, h);
 }
 
  void polygon(float x, float y, float radius, int npoints) {

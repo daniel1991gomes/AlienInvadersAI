@@ -39,11 +39,13 @@ int enemyCount = 200;
 float enemyPosX;
 float enemyPosY = 30;
   
+int moveX = 0;  
+  
 Ship(){
 
   
   
-  pos = new PVector(width / 2, height * 0.9);
+  pos = new PVector(300, height * 0.9);
   vel = new PVector(0,0);
   acc = new PVector(0,0);
   
@@ -51,26 +53,24 @@ Ship(){
   randomSeed(SeedUsed);
 
   //generate asteroids
-  enemies.add(new Enemy(random(50, 750), enemyPosY));
-  
-  brain = new NeuralNet(9, 16, 3);
+  enemies.add(new Enemy(50 + 100 * round(random(0, 7)), enemyPosY));
+  enemies.add(new Enemy(50 + 100 * round(random(0, 7)), enemyPosY));
+  brain = new NeuralNet(9, 4, 3);
 }  
 
 
 Ship(long seed) {
   replay = true;//is replaying
-  pos = new PVector(width / 2, height * 0.9);
+  pos = new PVector(300, height * 0.9);
   vel = new PVector(0,0);
   acc = new PVector(0,0);
   SeedUsed = seed;//use the parameter seed to set the enemies at the same position as the last one
   randomSeed(SeedUsed);
 
-  enemyPosX = random(50, 750);
-  enemyPosY = 30.0;
-  enemies.add(new Enemy(enemyPosX, enemyPosY));
-  enemyPosX = random(50, 750);
-  enemyPosY = 30.0;
-  enemies.add(new Enemy(enemyPosX, enemyPosY));
+
+  enemies.add(new Enemy(50 + 100 * round(random(0, 7)), enemyPosY));
+
+  enemies.add(new Enemy(50 + 100 * round(random(0, 7)), enemyPosY));
   
 
 }
@@ -135,10 +135,10 @@ void checkPositions() {
 void move(){
   checkTimers();
   
-  vel.add(acc);
-  vel.limit(5); 
-  if (pos.x + sizeX < width && pos.x > 0) {
-    pos.add(vel);
+  //vel.add(acc);
+  //vel.limit(5); 
+  if (pos.x + sizeX + moveX <= width && pos.x - moveX >= 0) {
+    pos.add(new PVector(moveX, 0));
   }
 
   for (int i=0; i< bullets.size(); i++){
@@ -187,7 +187,7 @@ Ship crossover(Ship parent2) {
 void calculateFitness() {
   float hitRate = (float)shotsHit/(float)shotsFired;
   fitness = (score+1)*10;
-  fitness *= lifespan;
+  //fitness *= lifespan;
   fitness *= hitRate*hitRate;//includes hitrate to encourage aiming
 }
 
@@ -208,7 +208,7 @@ void checkTimers() {
       }
       //aim the asteroid at the player to encourage movement
 
-      enemies.add(new Enemy(random(50, 750), enemyPosY));
+      enemies.add(new Enemy(50 + 100 * round(random(0, 7)), enemyPosY));
       enemyCount = 200;
     }
     
@@ -226,13 +226,11 @@ void look() {
   //look left
   PVector direction;
   for (int i = 0; i< vision.length; i++) {
-    direction = new PVector(i, 0);
-    direction.mult(100);
-    direction.add(50, 0, 0);
+    direction = new PVector(50 + 100*i, 0);
     vision[i] = lookInDirection(direction);
   }
   
-  if (canShoot && vision[0] !=0) {
+  if (canShoot) {
     vision[8] = 1;
   } else {
     vision[8] =0;
@@ -243,10 +241,10 @@ void look() {
 
 float lookInDirection(PVector direction) {
 
-  PVector position = new PVector(0, pos.y);//the position where we are currently looking for 
+  PVector position = direction;//the position where we are currently looking for 
   float distance = 0;
   //move once in the desired direction before starting 
-  position.add(direction);
+  position.add(new PVector(0, 10));
   distance +=1;
 
   //look in the direction until you reach a wall
@@ -258,7 +256,7 @@ float lookInDirection(PVector direction) {
       }
     }
 
-    position.add(direction);
+    position.add(new PVector(0, 1));
 
     distance +=1;
   }
@@ -267,19 +265,23 @@ float lookInDirection(PVector direction) {
 
 void think() {
   //get the output of the neural networkprintln(vision);
+  //println("Vision -------- ");
+  //println(vision);
   decision = brain.output(vision);
-
-  if (decision[1] > 0.8) {//output 1 is turn left
-    acc = new PVector(-2, 0);
+  //println("Decision -------- ");
+  //println(decision);
+  if (decision[1] > 0.5) {//output 1 is turn left //<>//
+    //acc = new PVector(-2, 0);
+    moveX = -100;
   } else {//cant turn right and left at the same time 
-    if (decision[2] > 0.8) {//output 2 is turn right
-      acc = new PVector(2, 0);
+    if (decision[2] > 0.5) {//output 2 is turn right
+      moveX = +100;
     } else {//if neither then dont turn
-      acc = new PVector(0, 0);
+      moveX = 0;
     }
   }
   //shooting
-  if (decision[0] > 0.8) {//output 3 is shooting
+  if (decision[0] > 0.6) {//output 3 is shooting
     shoot();
   }
 }

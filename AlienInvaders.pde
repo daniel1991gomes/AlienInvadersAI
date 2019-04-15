@@ -3,8 +3,8 @@
 Population pop;
 
 int speed = 100;
-float globalMutationRate = 0.15;
-boolean showBest = true;
+float globalMutationRate = 0.1;
+boolean showBest = false;
 float targetLine;
 
 
@@ -32,8 +32,6 @@ void draw() {
   }
   
   showScore();//display the score
-
-  
 }
 
 
